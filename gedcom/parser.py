@@ -41,49 +41,61 @@ class Gedcom:
       - a dict (only elements with pointers, which are the keys)
     """
 
-    def __init__(self, fd):
+    def __init__(self, filename=None, stream=None, fd=None):
         """ Initialize a GEDCOM data object. You must supply a Gedcom file."""
         self.as_list = []
         self.as_dict = {}
         self.top_element = Element(-1, "", "TOP", "")
-        self.parse(fd)
+        if filename:
+            f = open(filename)
+            stream = f.read()
+            f.close()
+        if fd:
+            stream = fd.read()
 
-    def parse(self, fd):
-        """Open and parse file path as GEDCOM 5.5 formatted data."""
-        line_num = 1
-        last_elem = self.top_element
-        for line in fd.read().split('\n')[:-1]:
-            last_elem = self.parse_line(line_num, line, last_elem)
-            line_num += 1
+        self.parse_stream(stream)
 
-    def parse_line(self, line_num, line, last_elem):
-        """Parse a line from a GEDCOM 5.5 formatted document.
+    def parse_stream(self, stream):
+        """Open and parse file path as GEDCOM 5.5 formatted data.
 
         Each line should have the following (bracketed items optional):
         level + ' ' + [pointer + ' ' +] tag + [' ' + line_value]
         """
-        ged_line_re = (
-            # Level must start with nonnegative int, no leading zeros.
-            '^\s*(0|[1-9]+[0-9]*) ' +
-            # Pointer optional, if it exists it must be flanked by '@'
-            '(@[^@]+@ |)' +
-            # Tag must be alphanumeric string
-            '([A-Za-z0-9_]+)' +
-            # Value optional, consists of anything after a space to end of line
-            '\s*(.*)\r$'
+        r = re.compile(
+                # Level must start with nonnegative int, no leading zeros.
+                '\s*(?P<level>0|[1-9]+[0-9]*) ' +
+                # Pointer optional, if it exists it must be flanked by '@'
+                '(?P<pointer>@[^@]+@ |)' +
+                # Tag must be alphanumeric string
+                '(?P<tag>[A-Za-z0-9_]+)' +
+                # Value optional, consists of anything after a space to end of line
+                r'(?P<value> [^\r\n]*)?', re.UNICODE
             )
-        if re.match(ged_line_re, line):
-            line_parts = re.match(ged_line_re, line).groups()
+        line_num = 1
+        last_elem = self.top_element
+        for line in r.finditer(stream):
+            last_elem = self.parse_line(line_num, line, last_elem)
+            line_num += 1
+
+    def parse_line(self, line_num, line, last_elem):
+        """Parse a line from a GEDCOM 5.5 formatted document.  """
+        d = line.groupdict()
+        print d
+        '''
         else:
             errmsg = ("Line %d of document violates GEDCOM format" % line_num +
                       "\nSee: http://homepages.rootsweb.ancestry.com/" +
                       "~pmcbride/gedcom/55gctoc.htm")
             raise SyntaxError(errmsg)
+        '''
 
-        level = int(line_parts[0])
-        pointer = line_parts[1].rstrip(' ')
-        tag = line_parts[2]
-        value = line_parts[3].lstrip(' ')
+        level = int(d['level'])
+        pointer = d['pointer'].rstrip(' ')
+        tag = d['tag']
+        if d['value']:
+            value = d['value'].lstrip(' ')
+        else:
+            value = ''
 
         # Check level: should never be more than one higher than previous line.
         if level > last_elem.level + 1:

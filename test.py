@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from gedcom import Gedcom
+import pytest
+from gedcom import Gedcom, GedcomParseError
 from StringIO import StringIO
 
 
@@ -33,7 +34,24 @@ def test_extranewline():
     assert len(g.as_list) == 2
 
 def test_utf8_chars():
-    g = Gedcom(stream="""0 HEAD
-1 SOUR אינה""")
-    assert g.as_list[1].value == 'אינה'
+    g = Gedcom(stream=u"""0 head
+1 sour אינה""".encode('utf-8'))
+    assert g.as_list[1].value == u'אינה'
+
+def test_bad_utf8_chars():
+    stream = "0 HEAD "
+    for i in (0x20d7, 0xa2d7, 0x91d7, 0xa8d7, 0x9520, 0xd79c, 0xd799, 0xd791,
+              0xd7a0, 0xd799, 0xd790, 0xd79c, 0x20d7, 0x95d7, 0x9ed7, 0xa9d7,
+              0x9d20, 0xd700,
+             ):
+        stream += chr(i / 0x100)+chr(i % 0x100)
+    with pytest.raises(GedcomParseError):
+        Gedcom(stream=stream)
+    g = Gedcom(stream=stream, encoding='utf-8')
+    assert g.as_list[0].value[-2:-1] == u"\ufffd"
+
+def test_filename():
+    g=Gedcom('test_data/1F94B7BF-65FC-42EA-AEF4-9B6087DD45DE.ged')
+    assert len(g.as_list) == 37410
+    assert len(g.as_dict.keys()) == 5156
 

@@ -38,11 +38,11 @@ class Gedcom:
 
     This parser reads and parses a GEDCOM file.
     Elements may be accessed via:
-      - a list (all elements, default order is same as in file)
-      - a dict (only elements with pointers, which are the keys)
+      - `as_list` (all elements, default order is same as in file)
+      - `as_dict` (only elements with pointers, which are the keys)
     """
 
-    def __init__(self, filename=None, stream=None, fd=None):
+    def __init__(self, filename=None, stream=None, fd=None, encoding=None):
         """ Initialize a GEDCOM data object. You must supply a Gedcom file."""
         self.as_list = []
         self.as_dict = {}
@@ -57,8 +57,13 @@ class Gedcom:
         if not len(stream):
             return
 
-        r = chardet.detect(stream)
-        self.parse_stream(stream.decode(r['encoding']))
+        if not encoding:
+            det = chardet.detect(stream)
+            encoding = det['encoding']
+            if not encoding:
+                raise GedcomParseError("failed to detect file's encoding")
+
+        self.parse_stream(stream.decode(encoding, errors='replace'))
 
     def parse_stream(self, stream):
         """Open and parse file path as GEDCOM 5.5 formatted data.

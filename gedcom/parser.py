@@ -27,6 +27,7 @@
 from __future__ import unicode_literals
 import re
 from element import Element
+import chardet
 
 
 class Gedcom:
@@ -53,7 +54,11 @@ class Gedcom:
         if fd:
             stream = fd.read()
 
-        self.parse_stream(stream)
+        if not len(stream):
+            return
+
+        r = chardet.detect(stream)
+        self.parse_stream(stream.decode(r['encoding']))
 
     def parse_stream(self, stream):
         """Open and parse file path as GEDCOM 5.5 formatted data.
@@ -80,7 +85,6 @@ class Gedcom:
     def parse_line(self, line_num, line, last_elem):
         """Parse a line from a GEDCOM 5.5 formatted document.  """
         d = line.groupdict()
-        print d
         '''
         else:
             errmsg = ("Line %d of document violates GEDCOM format" % line_num +

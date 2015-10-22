@@ -1,0 +1,2 @@
+chardet==2.3.0
+pytest==2.8.2

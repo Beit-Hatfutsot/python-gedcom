@@ -55,3 +55,13 @@ def test_filename():
     assert len(g.as_list) == 37410
     assert len(g.as_dict.keys()) == 5156
 
+def test_value_lines():
+    g = Gedcom(stream="""0 HEAD
+1 SOUR FTW
+2 NAME python
+testing 
+for the win
+3 DATE 2013-4-5""")
+    assert g.as_list[2].value == "python"
+
+

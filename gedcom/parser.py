@@ -63,7 +63,10 @@ class Gedcom:
             if not encoding:
                 raise GedcomParseError("failed to detect file's encoding")
 
-        self.parse_stream(stream.decode(encoding, errors='replace'))
+        try:
+            self.parse_stream(stream.decode(encoding, errors='replace'))
+        except LookupError:
+            raise GedcomParseError("failed to lookup file's encoding '{}'".format(encoding))
 
     def parse_stream(self, stream):
         """Open and parse file path as GEDCOM 5.5 formatted data.

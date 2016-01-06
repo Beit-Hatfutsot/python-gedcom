@@ -17,6 +17,7 @@
 # GNU General Public License for more details.
 #
 from __future__ import unicode_literals
+import re
 
 
 class Element:
@@ -44,6 +45,7 @@ class Element:
     See a Gedcom file for examples of tags and their values.
 
     """
+    year_re = re.compile("[\d]{4}")
 
     def __init__(self, level, pointer, tag, value):
         """ Initialize an element.
@@ -147,14 +149,17 @@ class Element:
             if e.tag == "BIRT":
                 for c in e.children:
                     if c.tag == "DATE":
-                        datel = c.value.split()
-                        date = datel[len(datel)-1]
-        if date == "":
-            return -1
+                        years = self.year_re.findall(c.value)
+                        break;
         try:
-            return int(date)
+            year = int(years[0])
         except:
-            return -1
+            return None
+
+        if year > 3000:
+            year -= 3760
+
+        return year
 
     @property
     def death(self):
@@ -185,14 +190,17 @@ class Element:
             if e.tag == "DEAT":
                 for c in e.children:
                     if c.tag == "DATE":
-                        datel = c.value.split()
-                        date = datel[len(datel)-1]
-        if date == "":
-            return -1
+                        years = self.year_re.findall(c.value)
+                        break;
         try:
-            return int(date)
+            year = int(years[0])
         except:
-            return -1
+            return None
+
+        if year > 3000:
+            year -= 3760
+
+        return year
 
     @property
     def burial(self):

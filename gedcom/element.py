@@ -203,6 +203,25 @@ class Element:
         return year
 
     @property
+    def marriage_years(self):
+        """ An array with all the marriage years of a person """
+        ret = []
+        if not self.is_individual:
+            return ret
+        for e in self.children:
+            if e.tag == "MARR":
+                for c in e.children:
+                    if c.tag == "DATE":
+                        year = self.year_re.findall(c.value)
+                        try:
+                            year = int(year[0])
+                        except:
+                            continue
+                        if year > 3000:
+                            year -= 3760
+                        ret.append(year)
+
+    @property
     def burial(self):
         """ The burial tuple of a person as (date,place) """
         date = ""

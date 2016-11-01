@@ -11,4 +11,7 @@ setup(
     maintainer='Madeleine Ball',
     maintainer_email='mpball@gmail.com',
     url='https://github.com/madprime/python-gedcom',
+    install_requires=[
+        'chardet',
+    ],
 )
